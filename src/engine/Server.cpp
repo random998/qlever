@@ -88,15 +88,18 @@ void Server::initialize(const std::string& indexBaseName, bool useText,
   }
 
   // Set up callback for update-no-snapshots parameter changes
+  // Initialize with current value to avoid deadlock in callback
+  static bool previousUpdateNoSnapshotsValue =
+      RuntimeParameters().get<"update-no-snapshots">();
   RuntimeParameters().setOnUpdateAction<"update-no-snapshots">(
       [this](bool newValue) {
-        // When changed from true to false, create a snapshot
-        static bool previousValue =
-            RuntimeParameters().get<"update-no-snapshots">();
-        if (previousValue && !newValue) {
+        // When changed from true to false, update metadata and create a
+        // snapshot
+        if (previousUpdateNoSnapshotsValue && !newValue) {
+          index_.deltaTriplesManager().forceMetadataUpdate();
           index_.deltaTriplesManager().forceSnapshotCreation();
         }
-        previousValue = newValue;
+        previousUpdateNoSnapshotsValue = newValue;
       });
 
   sortPerformanceEstimator_.computeEstimatesExpensively(
