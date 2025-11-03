@@ -256,7 +256,22 @@ DeltaTriples::DeltaTriples(const Index& index)
 // ____________________________________________________________________________
 DeltaTriplesManager::DeltaTriplesManager(const IndexImpl& index)
     : deltaTriples_{index},
-      currentLocatedTriplesSnapshot_{deltaTriples_.wlock()->getSnapshot()} {}
+      currentLocatedTriplesSnapshot_{deltaTriples_.wlock()->getSnapshot()} {
+  // Set up callback for update-no-snapshots parameter changes
+  // Initialize with current value to avoid deadlock in callback
+  static bool previousUpdateNoSnapshotsValue =
+      getRuntimeParameter<&RuntimeParameters::updateNoSnapshots_>();
+  globalRuntimeParameters.wlock()->updateNoSnapshots_.setOnUpdateAction(
+      [this](bool newValue) {
+        // When changed from true to false, update metadata and create a
+        // snapshot
+        if (previousUpdateNoSnapshotsValue && !newValue) {
+          forceMetadataUpdate();
+          forceSnapshotCreation();
+        }
+        previousUpdateNoSnapshotsValue = newValue;
+      });
+}
 
 // _____________________________________________________________________________
 template <typename ReturnType>

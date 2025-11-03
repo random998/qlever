@@ -89,21 +89,6 @@ void Server::initialize(const std::string& indexBaseName, bool useText,
     index_.addTextFromOnDiskIndex();
   }
 
-  // Set up callback for update-no-snapshots parameter changes
-  // Initialize with current value to avoid deadlock in callback
-  static bool previousUpdateNoSnapshotsValue =
-      getRuntimeParameter<&RuntimeParameters::updateNoSnapshots_>();
-  globalRuntimeParameters.wlock()->updateNoSnapshots_.setOnUpdateAction(
-      [this](bool newValue) {
-        // When changed from true to false, update metadata and create a
-        // snapshot
-        if (previousUpdateNoSnapshotsValue && !newValue) {
-          index_.deltaTriplesManager().forceMetadataUpdate();
-          index_.deltaTriplesManager().forceSnapshotCreation();
-        }
-        previousUpdateNoSnapshotsValue = newValue;
-      });
-
   sortPerformanceEstimator_.computeEstimatesExpensively(
       allocator_, index_.numTriples().normalAndInternal_() *
                       PERCENTAGE_OF_TRIPLES_FOR_SORT_ESTIMATE / 100);
