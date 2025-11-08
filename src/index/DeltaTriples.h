@@ -252,6 +252,13 @@ class DeltaTriples {
   friend class DeltaTriplesManager;
 };
 
+// TODO: testing
+struct ModifyOptions {
+  bool writeToDiskAfterRequest = true;
+  bool updateMetadataAfterRequest = true;
+  bool updateSnapshotAfterRequest = true;
+};
+
 // This class synchronizes the access to a `DeltaTriples` object, thus avoiding
 // race conditions between concurrent updates and queries.
 class DeltaTriplesManager {
@@ -267,12 +274,6 @@ class DeltaTriplesManager {
   explicit DeltaTriplesManager(const IndexImpl& index);
   FRIEND_TEST(DeltaTriplesTest, DeltaTriplesManager);
   FRIEND_TEST(DeltaTriplesTest, propagateChangesFromUpdatesMetadataBehavior);
-
-  struct ModifyOptions {
-    bool writeToDiskAfterRequest = true;
-    bool updateMetadataAfterRequest = true;
-    bool updateSnapshotAfterRequest = true;
-  };
 
   // Modify the underlying `DeltaTriples` by applying `function` and then update
   // the current snapshot. Concurrent calls to `modify` and `clear` will be
