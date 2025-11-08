@@ -461,9 +461,13 @@ TEST_F(DeltaTriplesTest, propagateChangesFromUpdatesParameter) {
 
   auto insertTriples = [&, this](const std::vector<std::string>& turtles) {
     auto triples = makeIdTriples(vocab, localVocab, turtles);
-    deltaTriplesManager.modify<void>([&](DeltaTriples& deltaTriples) {
-      deltaTriples.insertTriples(cancellationHandle, std::move(triples));
-    });
+    auto updateSnapshot =
+        getRuntimeParameter<&RuntimeParameters::propagateChangesFromUpdates_>();
+    deltaTriplesManager.modify<void>(
+        [&](DeltaTriples& deltaTriples) {
+          deltaTriples.insertTriples(cancellationHandle, std::move(triples));
+        },
+        {.updateSnapshotAfterRequest = updateSnapshot});
   };
 
   // Initially the changes from updates should be propagated.
@@ -539,9 +543,13 @@ TEST_F(DeltaTriplesTest, propagateChangesFromUpdatesMetadataBehavior) {
   };
   auto insertTriples = [&, this](const std::vector<std::string>& turtles) {
     auto triples = makeIdTriples(vocab, localVocab, turtles);
-    deltaTriplesManager.modify<void>([&](DeltaTriples& deltaTriples) {
-      deltaTriples.insertTriples(cancellationHandle, std::move(triples));
-    });
+    auto updateMetadata =
+        getRuntimeParameter<&RuntimeParameters::propagateChangesFromUpdates_>();
+    deltaTriplesManager.modify<void>(
+        [&](DeltaTriples& deltaTriples) {
+          deltaTriples.insertTriples(cancellationHandle, std::move(triples));
+        },
+        {.updateMetadataAfterRequest = updateMetadata});
   };
 
   setPropagateChangesFromUpdates(true);

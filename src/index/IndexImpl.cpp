@@ -943,7 +943,10 @@ void IndexImpl::createFromOnDiskIndex(const std::string& onDiskBase,
         },
         {.writeToDiskAfterRequest = false,
          .updateMetadataAfterRequest = false,
-         .updateSnapshotAfterRequest = false});
+         // It would also be enough to do a single snapshot after loading all
+         // permutations, but this is only very little overhead and reduces the
+         // complexity.
+         .updateSnapshotAfterRequest = true});
   };
 
   auto load = [this, &isInternalId, &setMetadata](
