@@ -1045,9 +1045,11 @@ CPP_template_def(typename RequestT, typename ResponseT)(
         for (ParsedQuery& update : updates) {
           bool propagateUpdates = getRuntimeParameter<
               &RuntimeParameters::propagateChangesFromUpdates_>();
-          // If snapshots are disabled but the update has a where clause, create
-          // a snapshot and update the metadata anyway. This ensures that
-          // updates are evaluated correctly even if the snapshots are disabled.
+          // If the propagation of changes from updates is disabled but the
+          // update has a where clause, create a snapshot and update the
+          // metadata anyway for the execution of this update. This ensures that
+          // updates are always evaluated correctly even if the option is
+          // disabled.
           tracer.beginTrace("snapshot");
           if (!propagateUpdates &&
               !update._rootGraphPattern._graphPatterns.empty()) {
@@ -1055,11 +1057,12 @@ CPP_template_def(typename RequestT, typename ResponseT)(
             qec.updateLocatedTriplesSnapshot(
                 index_.deltaTriplesManager().getNewSnapshot());
           } else {
-            // When snapshots are enabled (the default) update the snapshot
-            // before the query planning. Otherwise, it could happen that the
-            // query planner "knows" that a result is empty, when actually it is
-            // not due to a preceding update in the chain. Also, this improves
-            // the size estimates and hence the query plan.
+            // When update change propagation is enabled (the default) update
+            // set the current snapshot for the evaluation before for the query
+            // planning. Otherwise, it could happen that the query planner
+            // "knows" that a result is empty, when actually it is not due to a
+            // preceding update in the chain. Also, this improves the size
+            // estimates and hence the query plan.
             qec.updateLocatedTriplesSnapshot(
                 index_.deltaTriplesManager().getCurrentSnapshot());
           }

@@ -117,8 +117,8 @@ struct RuntimeParameters {
   Bool treatDefaultGraphAsNamedGraph_{false,
                                       "treat-default-graph-as-named-graph"};
 
-  // The changes from updates operations run after this parameter has been set to
-  // `false` will not be visible to queries until it is set back to `true`.
+  // The changes from updates operations run after this parameter has been set
+  // to `false` will not be visible to queries until it is set back to `true`.
   Bool propagateChangesFromUpdates_{true, "propagate-changes-from-updates"};
 
   // ___________________________________________________________________________

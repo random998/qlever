@@ -247,13 +247,12 @@ DeltaTriplesManager::DeltaTriplesManager(const IndexImpl& index)
       currentLocatedTriplesSnapshot_{deltaTriples_.wlock()->getSnapshot()},
       previousPropagateChangesFromUpdates_{getRuntimeParameter<
           &RuntimeParameters::propagateChangesFromUpdates_>()} {
-  // Set up callback for update-no-snapshots parameter changes.
-  // Initialize with current value to avoid deadlock in callback.
+  // Set up callback for propagate-changes-form-updates parameter changes.
   globalRuntimeParameters.wlock()
       ->propagateChangesFromUpdates_.setOnUpdateAction([this](bool newValue) {
-        // When update change propagation is enabled from being disabled,update
-        // metadata and create a snapshot. When the same value is set twice or
-        // for the other transitions nothing happens.
+        // When update change propagation is enabled from being disabled, update
+        // metadata and create a snapshot. When the same value is set again or
+        // it is disabled from being enabled, nothing needs to be done.
         if (!previousPropagateChangesFromUpdates_ && newValue) {
           forceMetadataUpdate();
           updateStoredSnapshot();
@@ -275,8 +274,8 @@ ReturnType DeltaTriplesManager::modify(
   return deltaTriples_.withWriteLock(
       [this, &function, &options, &tracer](DeltaTriples& deltaTriples) {
         auto updateSnapshot = [this, &deltaTriples, &options] {
-          // Only create a new snapshot if the update-no-snapshots parameter is
-          // false
+          // Only create a new snapshot if the propagate-changes-from-updates
+          // parameter is true.
           if (options.updateSnapshotAfterRequest) {
             auto newSnapshot = deltaTriples.getSnapshot();
             currentLocatedTriplesSnapshot_.withWriteLock(
@@ -297,8 +296,8 @@ ReturnType DeltaTriplesManager::modify(
           tracer.endTrace("snapshotCreation");
         };
         auto updateMetadata = [&tracer, &deltaTriples, &options]() {
-          // Only update the metadata if the update-no-snapshots parameter is
-          // false
+          // Only update the metadata if the propagate-changes-from-updates
+          // parameter is true.
           tracer.beginTrace("updateMetadata");
           if (options.updateMetadataAfterRequest) {
             deltaTriples.updateAugmentedMetadata();
@@ -363,9 +362,7 @@ SharedLocatedTriplesSnapshot DeltaTriplesManager::getNewSnapshot() {
 // _____________________________________________________________________________
 void DeltaTriplesManager::forceMetadataUpdate() {
   deltaTriples_.withWriteLock([](DeltaTriples& deltaTriples) {
-    // Update augmented metadata for all 6 permutations
-    ql::ranges::for_each(deltaTriples.locatedTriples(),
-                         &LocatedTriplesPerBlock::updateAugmentedMetadata);
+    deltaTriples.updateAugmentedMetadata();
   });
 }
 

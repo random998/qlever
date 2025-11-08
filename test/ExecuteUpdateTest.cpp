@@ -59,7 +59,8 @@ TEST(ExecuteUpdate, executeUpdate) {
                 ExecuteUpdate::executeUpdate(index, pq, qet, deltaTriples,
                                              sharedHandle);
               });
-          qec.updateLocatedTriplesSnapshot(index.deltaTriplesManager().getCurrentSnapshot());
+          qec.updateLocatedTriplesSnapshot(
+              index.deltaTriplesManager().getCurrentSnapshot());
         }
       };
   ad_utility::testing::TestIndexConfig indexConfig{};
